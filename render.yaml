@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: smartreco
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python -m scripts.seed_products"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: MESH_API_KEY
+        sync: false
+      - key: MESH_BASE_URL
+        value: https://api.meshapi.ai/v1
+      - key: MESH_MODEL
+        value: openai/gpt-4o-mini
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///./smartreco.db
+      - key: CHROMA_PERSIST_DIR
+        value: ./chroma_data
+      - key: REC_EVENT_THRESHOLD
+        value: "5"
+      - key: REC_MIN_REFRESH_SECONDS
+        value: "120"
+      - key: PYTHON_VERSION
+        value: "3.11.9"
