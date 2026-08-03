@@ -15,7 +15,7 @@ services:
       - key: MESH_BASE_URL
         value: https://api.meshapi.ai/v1
       - key: MESH_MODEL
-        value: openai/gpt-4o-mini
+        value: tencent/hy3
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL

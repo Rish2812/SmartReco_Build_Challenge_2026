@@ -33,9 +33,20 @@ Based on this, respond with ONLY a JSON object (no markdown fences, no prose) wi
 - "category_hint": your best guess at a single course category name that matches, or null if unclear
 """
     raw = chat_completion([{"role": "user", "content": prompt}], temperature=0.2)
+    parsed = None
     try:
         parsed = json.loads(raw.strip().strip("`").removeprefix("json").strip())
     except (json.JSONDecodeError, AttributeError):
+        # Reasoning-style models sometimes wrap JSON in explanatory text even when told
+        # not to. Fall back to pulling out the first {...} block found anywhere in the reply.
+        import re
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            try:
+                parsed = json.loads(match.group(0))
+            except json.JSONDecodeError:
+                parsed = None
+    if parsed is None:
         parsed = {"interest_summary": state["events_summary"][:200], "search_query": state["events_summary"][:100], "category_hint": None}
 
     state["retrieval_query"] = parsed.get("search_query") or state["events_summary"][:100]

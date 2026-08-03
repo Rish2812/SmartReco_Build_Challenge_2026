@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     # Mesh API (all LLM calls go through this)
     mesh_api_key: str = ""
     mesh_base_url: str = "https://api.meshapi.ai/v1"
-    mesh_model: str = "openai/gpt-4o-mini"
+    mesh_model: str = "tencent/hy3"
 
     # Auth
     jwt_secret: str = "dev-secret-change-me"
