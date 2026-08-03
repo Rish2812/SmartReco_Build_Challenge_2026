@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title if product else "Not found" }} — SmartReco{% endblock %}
+{% block content %}
+  {% if product %}
+    <p><a href="/" style="color:var(--muted); font-size:13px;">← Back to catalog</a></p>
+    <span class="tag">{{ product.category }} · {{ product.level }}</span>
+    <h1 style="margin-top:6px;">{{ product.title }}</h1>
+    <p style="color:var(--muted); max-width:640px;">{{ product.description }}</p>
+    <p class="price" style="font-size:20px;">${{ '%.0f'|format(product.price) }}</p>
+  {% else %}
+    <p>Product not found.</p>
+  {% endif %}
+
+  <script>
+    window.__smartreco_product_id = {{ product.id if product else 'null' }};
+  </script>
+{% endblock %}

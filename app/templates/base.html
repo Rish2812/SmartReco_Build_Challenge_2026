@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SmartReco{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand">Smart<span>Reco</span></a>
+    <nav class="navlinks">
+      <a href="/">Catalog</a>
+      <a href="/dashboard">My Recommendations</a>
+      <a href="/admin" id="adminLink" style="display:none;">Admin</a>
+    </nav>
+    <div class="authbox" id="authBox">
+      <a href="/login" id="loginLink">Log in</a>
+    </div>
+  </header>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">Built for the SmartReco Build Challenge 2026 · behavioral recommendations, grounded in your real catalog.</footer>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/tracker.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

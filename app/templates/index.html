@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}SmartReco — Catalog{% endblock %}
+{% block content %}
+  <div class="hero">
+    <h1>Learn what actually moves you forward.</h1>
+    <p>Browse the catalog — SmartReco quietly learns what you're into and builds you a tailored short-list.</p>
+  </div>
+
+  <form class="search-row" method="get" action="/" onsubmit="Tracker.trackSearch(this.q.value)" style="margin-bottom:20px;">
+    <input type="text" name="q" placeholder="Search courses…" value="{{ search_query or '' }}"
+      style="padding:10px 14px; width:280px; border:1px solid var(--line); border-radius:8px; font-size:14px;" />
+    {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}" />{% endif %}
+    <button type="submit" style="padding:10px 16px; border:none; border-radius:8px; background:var(--ink); color:white; cursor:pointer;">Search</button>
+  </form>
+
+  <div class="category-filter">
+
+    <a href="/" class="{{ 'active' if not active_category else '' }}">All</a>
+    {% for c in categories %}
+      <a href="/?category={{ c }}" class="{{ 'active' if active_category == c else '' }}">{{ c }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="grid">
+    {% for p in products %}
+      <a href="/product/{{ p.id }}" class="card" data-product-id="{{ p.id }}" onclick="Tracker.trackClick({{ p.id }})">
+        <span class="tag">{{ p.category }} · {{ p.level }}</span>
+        <h3>{{ p.title }}</h3>
+        <p>{{ p.description[:110] }}{% if p.description|length > 110 %}…{% endif %}</p>
+        <span class="price">${{ '%.0f'|format(p.price) }}</span>
+      </a>
+    {% else %}
+      <p>No products yet — an admin needs to add some from the Admin panel.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

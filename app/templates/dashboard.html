@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}My Recommendations — SmartReco{% endblock %}
+{% block content %}
+  <h1>Your recommendations</h1>
+  <p style="color:var(--muted);">Built from how you've actually been browsing — updates as your behavior changes.</p>
+
+  <div id="recPanel"></div>
+
+  <script>
+    async function loadRecommendation() {
+      const panel = document.getElementById('recPanel');
+      if (!Auth.getToken()) {
+        panel.innerHTML = '<p>Please <a href="/login">log in</a> to see your recommendations.</p>';
+        return;
+      }
+      panel.innerHTML = '<p style="color:var(--muted);">Loading your picks…</p>';
+
+      const res = await Auth.authedFetch('/recommendations/me');
+      if (res.status === 404) {
+        panel.innerHTML = '<div class="rec-panel"><p>No recommendations yet — browse a few courses on the <a href="/">catalog</a> first, and check back here.</p></div>';
+        return;
+      }
+      if (!res.ok) {
+        panel.innerHTML = '<p>Could not load recommendations right now.</p>';
+        return;
+      }
+      const rec = await res.json();
+
+      const productsHtml = rec.products.map(p => `
+        <a href="/product/${p.id}" class="card">
+          <span class="tag">${p.category} · ${p.level}</span>
+          <h3>${p.title}</h3>
+          <p>${p.description.slice(0, 100)}${p.description.length > 100 ? '…' : ''}</p>
+          <span class="price">$${Math.round(p.price)}</span>
+        </a>
+      `).join('');
+
+      panel.innerHTML = `
+        <div class="rec-panel">
+          <h2>Picked for you</h2>
+          <div class="narrative">${rec.narrative}</div>
+          <div class="grid">${productsHtml}</div>
+          <div class="meta">Trigger: ${rec.trigger_reason || 'n/a'} · Generated ${new Date(rec.created_at).toLocaleString()}</div>
+        </div>
+      `;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadRecommendation);
+  </script>
+{% endblock %}

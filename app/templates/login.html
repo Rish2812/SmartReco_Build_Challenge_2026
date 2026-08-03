@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Log in — SmartReco{% endblock %}
+{% block content %}
+  <div class="form-card">
+    <h2 id="formTitle">Log in</h2>
+    <div class="error-msg" id="errorMsg" style="display:none;"></div>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="submitBtn">Log in</button>
+    <div class="switch">
+      <span id="switchPrompt">New here?</span>
+      <a href="#" id="switchLink">Create an account</a>
+    </div>
+  </div>
+
+  <script>
+    let mode = 'login';
+
+    function setMode(newMode) {
+      mode = newMode;
+      document.getElementById('formTitle').textContent = mode === 'login' ? 'Log in' : 'Create account';
+      document.getElementById('submitBtn').textContent = mode === 'login' ? 'Log in' : 'Sign up';
+      document.getElementById('switchPrompt').textContent = mode === 'login' ? 'New here?' : 'Already have an account?';
+      document.getElementById('switchLink').textContent = mode === 'login' ? 'Create an account' : 'Log in';
+    }
+
+    document.getElementById('switchLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      setMode(mode === 'login' ? 'register' : 'login');
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('errorMsg');
+      errorEl.style.display = 'none';
+
+      try {
+        let res;
+        if (mode === 'register') {
+          res = await fetch('/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+        } else {
+          const form = new URLSearchParams();
+          form.append('username', email);
+          form.append('password', password);
+          res = await fetch('/auth/token', { method: 'POST', body: form });
+        }
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Something went wrong');
+        }
+        const data = await res.json();
+        Auth.setSession(data.access_token, data.user);
+        window.location.href = data.user.role === 'admin' ? '/admin' : '/dashboard';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Admin — SmartReco{% endblock %}
+{% block content %}
+  <h1>Admin</h1>
+
+  <div class="stat-row" id="statRow"></div>
+
+  <h3>Add a product</h3>
+  <form class="admin-form" id="productForm">
+    <input type="text" name="title" placeholder="Title" required />
+    <input type="text" name="category" placeholder="Category (e.g. Data Science)" required />
+    <input type="number" name="price" placeholder="Price" step="0.01" required />
+    <select name="level">
+      <option value="beginner">Beginner</option>
+      <option value="intermediate">Intermediate</option>
+      <option value="advanced">Advanced</option>
+    </select>
+    <textarea name="description" placeholder="Description" required></textarea>
+    <button type="submit">Add product (dual-writes to SQL + vector store)</button>
+  </form>
+
+  <h3>Catalog</h3>
+  <table id="productTable">
+    <thead>
+      <tr><th>Title</th><th>Category</th><th>Level</th><th>Price</th><th>Vector Sync</th><th></th></tr>
+    </thead>
+    <tbody id="productTableBody"></tbody>
+  </table>
+
+  <script>
+    async function guardAdmin() {
+      const user = Auth.getUser();
+      if (!user || user.role !== 'admin') {
+        document.querySelector('.content').innerHTML = '<p>Admin access required. <a href="/login">Log in</a> as an admin.</p>';
+        return false;
+      }
+      return true;
+    }
+
+    async function loadStats() {
+      const res = await Auth.authedFetch('/admin/stats');
+      if (!res.ok) return;
+      const stats = await res.json();
+      document.getElementById('statRow').innerHTML = Object.entries(stats).map(([k, v]) => `
+        <div class="stat"><div class="num">${v}</div><div class="label">${k.replaceAll('_', ' ')}</div></div>
+      `).join('');
+    }
+
+    async function loadProducts() {
+      const res = await fetch('/products');
+      const products = await res.json();
+      document.getElementById('productTableBody').innerHTML = products.map(p => `
+        <tr>
+          <td>${p.title}</td>
+          <td>${p.category}</td>
+          <td>${p.level}</td>
+          <td>$${p.price}</td>
+          <td><span class="pill ${p.vector_synced ? 'synced' : 'pending'}">${p.vector_synced ? 'synced' : 'pending'}</span></td>
+          <td><button data-id="${p.id}" class="deleteBtn" style="border:none;background:none;color:var(--clay-dark);cursor:pointer;">Delete</button></td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.deleteBtn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await Auth.authedFetch(`/products/${btn.dataset.id}`, { method: 'DELETE' });
+          loadProducts();
+          loadStats();
+        });
+      });
+    }
+
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        title: form.title.value,
+        category: form.category.value,
+        price: parseFloat(form.price.value),
+        level: form.level.value,
+        description: form.description.value,
+      };
+      const res = await Auth.authedFetch('/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        form.reset();
+        loadProducts();
+        loadStats();
+      } else {
+        alert('Failed to add product');
+      }
+    });
+
+    (async () => {
+      if (await guardAdmin()) {
+        loadStats();
+        loadProducts();
+      }
+    })();
+  </script>
+{% endblock %}
