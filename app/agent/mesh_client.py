@@ -12,7 +12,9 @@ _client: OpenAI | None = None
 def get_mesh_client() -> OpenAI:
     global _client
     if _client is None:
-        _client = OpenAI(base_url=settings.mesh_base_url, api_key=settings.mesh_api_key, timeout=20.0, max_retries=1)
+        # tencent/hy3 is a "thinking" model on Mesh's free tier and can be slow —
+        # visible reasoning traces plus free-tier queueing means 20s was too tight.
+        _client = OpenAI(base_url=settings.mesh_base_url, api_key=settings.mesh_api_key, timeout=55.0, max_retries=1)
     return _client
 
 
