@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -6,6 +7,16 @@ from sqlalchemy import func
 from app.config import settings
 from app.models import Event, Recommendation, Product
 from app.agent.graph import get_recommendation_graph
+
+logger = logging.getLogger("smartreco.agent")
+
+
+class RecommendationGenerationError(Exception):
+    """Raised when the agent graph (Mesh call, retrieval, etc.) fails. The original
+    exception is logged in full server-side; this carries a safe summary for the API layer."""
+    def __init__(self, message: str, original: Exception):
+        super().__init__(message)
+        self.original = original
 
 
 def _summarize_events(db: Session, user_id: int, limit: int = 30) -> str:
@@ -78,7 +89,17 @@ def generate_and_store_recommendation(db: Session, user_id: int, trigger_reason:
     total_events = db.query(func.count(Event.id)).filter(Event.user_id == user_id).scalar() or 0
 
     graph = get_recommendation_graph()
-    result = graph.invoke({"user_id": user_id, "events_summary": events_summary})
+    try:
+        result = graph.invoke({"user_id": user_id, "events_summary": events_summary})
+    except Exception as exc:
+        # This is the single place a Mesh call, embedding call, or JSON-parse issue in
+        # the agent will surface. Logged loudly and specifically so it's easy to find
+        # in `render logs` / the Actions log, rather than a buried generic traceback.
+        logger.exception(
+            "[RECOMMENDATION AGENT FAILED] user_id=%s mesh_model=%s mesh_base_url=%s error_type=%s",
+            user_id, settings.mesh_model, settings.mesh_base_url, type(exc).__name__,
+        )
+        raise RecommendationGenerationError(f"Agent graph failed: {exc}", exc) from exc
 
     rec = Recommendation(
         user_id=user_id,

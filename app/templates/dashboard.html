@@ -51,7 +51,9 @@
         return;
       }
       if (!res.ok) {
-        panel.innerHTML = '<div class="empty-state">Could not load recommendations right now. Please try again shortly.</div>';
+        let detail = 'Please try again shortly.';
+        try { detail = (await res.json()).detail || detail; } catch (e) {}
+        panel.innerHTML = `<div class="empty-state">Could not load recommendations right now. ${detail}</div>`;
         return;
       }
 
