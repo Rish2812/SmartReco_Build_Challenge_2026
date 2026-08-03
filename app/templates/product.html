@@ -2,13 +2,31 @@
 {% block title %}{{ product.title if product else "Not found" }} — SmartReco{% endblock %}
 {% block content %}
   {% if product %}
-    <p><a href="/" style="color:var(--muted); font-size:13px;">← Back to catalog</a></p>
-    <span class="tag">{{ product.category }} · {{ product.level }}</span>
-    <h1 style="margin-top:6px;">{{ product.title }}</h1>
-    <p style="color:var(--muted); max-width:640px;">{{ product.description }}</p>
-    <p class="price" style="font-size:20px;">${{ '%.0f'|format(product.price) }}</p>
+    {% set rating = (4.3 + (product.id % 7) * 0.1) | round(1) %}
+    {% set reviews = 80 + (product.id * 37 % 900) %}
+    {% set students = 400 + (product.id * 211 % 4000) %}
+    <div class="product-hero thumb-{{ product.id % 6 }}">
+      <a href="/" class="back-link">← Back to catalog</a>
+      <span class="level-pill" style="display:inline-block; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; background:rgba(0,0,0,0.28);">{{ product.category }} · {{ product.level }}</span>
+      <h1>{{ product.title }}</h1>
+      <p class="desc">{{ product.description }}</p>
+      <div class="product-detail-footer">
+        <span class="price">${{ '%.0f'|format(product.price) }}</span>
+        <button class="enroll-btn" onclick="Tracker.trackClick({{ product.id }}); this.textContent='Enrolled ✓'; this.disabled=true;">Enroll now</button>
+        <div style="color:rgba(255,255,255,0.85); font-size:13px;">
+          <span class="stars" style="color:#ffd98a;">★★★★★</span> {{ rating }} ({{ reviews }} reviews) · {{ students }} students
+        </div>
+      </div>
+    </div>
+
+    <div class="section-heading"><h2>What you'll walk away with</h2></div>
+    <p style="color:var(--muted); max-width:680px; line-height:1.7;">
+      This course is grounded in the SmartReco catalog — meaning your activity here (viewing, time spent, searching)
+      directly feeds the recommendation agent, so the more you explore, the sharper your picks on
+      <a href="/dashboard" style="color:var(--clay-dark); font-weight:600; text-decoration:none;">My Recommendations</a> become.
+    </p>
   {% else %}
-    <p>Product not found.</p>
+    <div class="empty-state">Course not found. <a href="/">Back to catalog</a></div>
   {% endif %}
 
   <script>

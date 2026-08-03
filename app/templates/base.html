@@ -15,7 +15,7 @@
       <a href="/admin" id="adminLink" style="display:none;">Admin</a>
     </nav>
     <div class="authbox" id="authBox">
-      <a href="/login" id="loginLink">Log in</a>
+      <a href="/login">Log in</a>
     </div>
   </header>
 
@@ -23,7 +23,29 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="footer">Built for the SmartReco Build Challenge 2026 · behavioral recommendations, grounded in your real catalog.</footer>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">Smart<span style="color:var(--clay);">Reco</span></div>
+        <p class="footer-tag">Behavioral AI recommendations, grounded in a real course catalog — built for the SmartReco Build Challenge 2026.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="/">Catalog</a>
+          <a href="/dashboard">Recommendations</a>
+          <a href="/admin">Admin</a>
+        </div>
+        <div class="footer-col">
+          <h4>How it works</h4>
+          <a href="#">Behavioral tracking</a>
+          <a href="#">Agentic retrieval</a>
+          <a href="#">Daily digest</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-legal">Built with FastAPI, LangGraph, Chroma &amp; Mesh API.</div>
+  </footer>
 
   <script src="/static/js/auth.js"></script>
   <script src="/static/js/tracker.js"></script>

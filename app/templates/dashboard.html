@@ -1,43 +1,67 @@
 {% extends "base.html" %}
 {% block title %}My Recommendations — SmartReco{% endblock %}
 {% block content %}
-  <h1>Your recommendations</h1>
-  <p style="color:var(--muted);">Built from how you've actually been browsing — updates as your behavior changes.</p>
+  <div style="padding-top:40px;">
+    <span class="eyebrow">✦ Personalized for you</span>
+    <h1 style="margin:0 0 8px;">Your recommendations</h1>
+    <p style="color:var(--muted); margin-bottom:32px;">Built from how you've actually been browsing — updates as your behavior changes.</p>
+  </div>
 
   <div id="recPanel"></div>
 
   <script>
+    function skeletonHtml() {
+      return `<div class="grid">${'<div class="skeleton"></div>'.repeat(3)}</div>`;
+    }
+
+    function cardHtml(p) {
+      const rating = (4.3 + (p.id % 7) * 0.1).toFixed(1);
+      const reviews = 80 + ((p.id * 37) % 900);
+      return `
+        <a href="/product/${p.id}" class="card">
+          <div class="card-thumb thumb-${p.id % 6}"><span class="level-pill">${p.level}</span></div>
+          <div class="card-body">
+            <span class="tag">${p.category}</span>
+            <h3>${p.title}</h3>
+            <p>${p.description.slice(0, 90)}${p.description.length > 90 ? '…' : ''}</p>
+            <div class="card-meta"><span class="stars">★★★★★</span><span class="rating-num">${rating}</span><span>(${reviews})</span></div>
+            <div class="card-footer"><span class="price">$${Math.round(p.price)}</span></div>
+          </div>
+        </a>`;
+    }
+
     async function loadRecommendation() {
       const panel = document.getElementById('recPanel');
       if (!Auth.getToken()) {
-        panel.innerHTML = '<p>Please <a href="/login">log in</a> to see your recommendations.</p>';
+        panel.innerHTML = '<div class="empty-state">Please <a href="/login">log in</a> to see your personalized recommendations.</div>';
         return;
       }
-      panel.innerHTML = '<p style="color:var(--muted);">Loading your picks…</p>';
+      panel.innerHTML = skeletonHtml();
 
-      const res = await Auth.authedFetch('/recommendations/me');
+      let res;
+      try {
+        res = await Auth.authedFetch('/recommendations/me');
+      } catch (e) {
+        panel.innerHTML = '<div class="empty-state">Could not reach the server. Please try again.</div>';
+        return;
+      }
+
       if (res.status === 404) {
-        panel.innerHTML = '<div class="rec-panel"><p>No recommendations yet — browse a few courses on the <a href="/">catalog</a> first, and check back here.</p></div>';
+        panel.innerHTML = '<div class="empty-state">No recommendations yet — browse a few courses on the <a href="/">catalog</a> first, then check back here.</div>';
         return;
       }
       if (!res.ok) {
-        panel.innerHTML = '<p>Could not load recommendations right now.</p>';
+        panel.innerHTML = '<div class="empty-state">Could not load recommendations right now. Please try again shortly.</div>';
         return;
       }
-      const rec = await res.json();
 
-      const productsHtml = rec.products.map(p => `
-        <a href="/product/${p.id}" class="card">
-          <span class="tag">${p.category} · ${p.level}</span>
-          <h3>${p.title}</h3>
-          <p>${p.description.slice(0, 100)}${p.description.length > 100 ? '…' : ''}</p>
-          <span class="price">$${Math.round(p.price)}</span>
-        </a>
-      `).join('');
+      const rec = await res.json();
+      const productsHtml = rec.products.map(cardHtml).join('');
 
       panel.innerHTML = `
         <div class="rec-panel">
-          <h2>Picked for you</h2>
+          <span class="eyebrow">✦ Picked for you</span>
+          <h2>Here's what fits where you're headed</h2>
           <div class="narrative">${rec.narrative}</div>
           <div class="grid">${productsHtml}</div>
           <div class="meta">Trigger: ${rec.trigger_reason || 'n/a'} · Generated ${new Date(rec.created_at).toLocaleString()}</div>

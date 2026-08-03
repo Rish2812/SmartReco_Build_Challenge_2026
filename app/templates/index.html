@@ -1,36 +1,56 @@
 {% extends "base.html" %}
-{% block title %}SmartReco — Catalog{% endblock %}
+{% block title %}SmartReco — Learn what actually moves you forward{% endblock %}
 {% block content %}
   <div class="hero">
+    <span class="eyebrow">✦ AI-powered recommendations</span>
     <h1>Learn what actually moves you forward.</h1>
-    <p>Browse the catalog — SmartReco quietly learns what you're into and builds you a tailored short-list.</p>
+    <p>Browse the catalog — SmartReco quietly learns what you're into and builds you a tailored, personalized short-list as you go.</p>
+
+    <form class="search-row" method="get" action="/" onsubmit="Tracker.trackSearch(this.q.value)">
+      <input type="text" name="q" placeholder="Search courses, topics, skills…" value="{{ search_query or '' }}" />
+      {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}" />{% endif %}
+      <button type="submit">Search</button>
+    </form>
   </div>
 
-  <form class="search-row" method="get" action="/" onsubmit="Tracker.trackSearch(this.q.value)" style="margin-bottom:20px;">
-    <input type="text" name="q" placeholder="Search courses…" value="{{ search_query or '' }}"
-      style="padding:10px 14px; width:280px; border:1px solid var(--line); border-radius:8px; font-size:14px;" />
-    {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}" />{% endif %}
-    <button type="submit" style="padding:10px 16px; border:none; border-radius:8px; background:var(--ink); color:white; cursor:pointer;">Search</button>
-  </form>
-
   <div class="category-filter">
-
-    <a href="/" class="{{ 'active' if not active_category else '' }}">All</a>
+    <a href="/" class="{{ 'active' if not active_category else '' }}">All courses</a>
     {% for c in categories %}
       <a href="/?category={{ c }}" class="{{ 'active' if active_category == c else '' }}">{{ c }}</a>
     {% endfor %}
   </div>
 
+  <div class="section-heading">
+    <h2>{{ 'Search results' if search_query else (active_category or 'Featured courses') }}</h2>
+    <span class="count">{{ products|length }} course{{ 's' if products|length != 1 else '' }}</span>
+  </div>
+
   <div class="grid">
     {% for p in products %}
-      <a href="/product/{{ p.id }}" class="card" data-product-id="{{ p.id }}" onclick="Tracker.trackClick({{ p.id }})">
-        <span class="tag">{{ p.category }} · {{ p.level }}</span>
-        <h3>{{ p.title }}</h3>
-        <p>{{ p.description[:110] }}{% if p.description|length > 110 %}…{% endif %}</p>
-        <span class="price">${{ '%.0f'|format(p.price) }}</span>
+      {% set rating = (4.3 + (p.id % 7) * 0.1) | round(1) %}
+      {% set reviews = 80 + (p.id * 37 % 900) %}
+      <a href="/product/{{ p.id }}" class="card" onclick="Tracker.trackClick({{ p.id }})">
+        <div class="card-thumb thumb-{{ p.id % 6 }}">
+          <span class="level-pill">{{ p.level }}</span>
+        </div>
+        <div class="card-body">
+          <span class="tag">{{ p.category }}</span>
+          <h3>{{ p.title }}</h3>
+          <p>{{ p.description[:100] }}{% if p.description|length > 100 %}…{% endif %}</p>
+          <div class="card-meta">
+            <span class="stars">★★★★★</span>
+            <span class="rating-num">{{ rating }}</span>
+            <span>({{ reviews }})</span>
+          </div>
+          <div class="card-footer">
+            <span class="price">${{ '%.0f'|format(p.price) }}</span>
+          </div>
+        </div>
       </a>
     {% else %}
-      <p>No products yet — an admin needs to add some from the Admin panel.</p>
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        No courses match yet — <a href="/">clear filters</a> or check back once an admin adds some from the <a href="/admin">Admin panel</a>.
+      </div>
     {% endfor %}
   </div>
 {% endblock %}

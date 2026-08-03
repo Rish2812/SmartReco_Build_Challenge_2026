@@ -52,6 +52,8 @@ def home(request: Request, category: str | None = None, q: str | None = None, db
 @app.get("/product/{product_id}")
 def product_detail(product_id: int, request: Request, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        return templates.TemplateResponse("404.html", {"request": request, "reason": "That course doesn't exist (or was removed)."}, status_code=404)
     return templates.TemplateResponse("product.html", {"request": request, "product": product})
 
 
@@ -73,3 +75,8 @@ def admin_page(request: Request):
 @app.get("/healthz")
 def healthz():
     return {"status": "ok"}
+
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc):
+    return templates.TemplateResponse("404.html", {"request": request, "reason": "Page not found."}, status_code=404)

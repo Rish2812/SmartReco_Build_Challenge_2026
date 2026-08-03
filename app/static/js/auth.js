@@ -31,7 +31,7 @@ function renderNavAuthState() {
   if (!authBox) return;
 
   if (user) {
-    authBox.innerHTML = `<span style="margin-right:12px; font-size:14px;">${user.email}</span><button id="logoutBtn">Log out</button>`;
+    authBox.innerHTML = `<span class="user-chip">${user.email}</span><button id="logoutBtn">Log out</button>`;
     document.getElementById('logoutBtn').addEventListener('click', () => {
       Auth.clearSession();
       window.location.href = '/';

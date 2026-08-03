@@ -1,40 +1,121 @@
 {% extends "base.html" %}
 {% block title %}Log in — SmartReco{% endblock %}
 {% block content %}
-  <div class="form-card">
-    <h2 id="formTitle">Log in</h2>
-    <div class="error-msg" id="errorMsg" style="display:none;"></div>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="submitBtn">Log in</button>
-    <div class="switch">
-      <span id="switchPrompt">New here?</span>
-      <a href="#" id="switchLink">Create an account</a>
+  <div class="auth-wrap">
+    <div class="form-card">
+      <span class="eyebrow">✦ Welcome</span>
+      <h2 id="formTitle">Log in</h2>
+      <div class="subhead" id="formSubhead">Pick up where your recommendations left off.</div>
+
+      <div class="error-banner" id="errorBanner" style="display:none;"></div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+        <div class="field-hint error" id="emailHint" style="display:none;"></div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="field-input-wrap">
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+          <button type="button" class="toggle-pw" id="togglePw">Show</button>
+        </div>
+        <div class="field-hint" id="pwHint">At least 6 characters</div>
+      </div>
+
+      <button type="button" class="submit-btn" id="submitBtn">Log in</button>
+
+      <div class="switch">
+        <span id="switchPrompt">New here?</span>
+        <a id="switchLink">Create an account</a>
+      </div>
     </div>
   </div>
 
   <script>
     let mode = 'login';
+    const emailEl = document.getElementById('email');
+    const pwEl = document.getElementById('password');
+    const errorBanner = document.getElementById('errorBanner');
+    const emailHint = document.getElementById('emailHint');
+    const pwHint = document.getElementById('pwHint');
+    const submitBtn = document.getElementById('submitBtn');
+
+    document.getElementById('togglePw').addEventListener('click', () => {
+      const isPw = pwEl.type === 'password';
+      pwEl.type = isPw ? 'text' : 'password';
+      document.getElementById('togglePw').textContent = isPw ? 'Hide' : 'Show';
+    });
 
     function setMode(newMode) {
       mode = newMode;
       document.getElementById('formTitle').textContent = mode === 'login' ? 'Log in' : 'Create account';
-      document.getElementById('submitBtn').textContent = mode === 'login' ? 'Log in' : 'Sign up';
+      document.getElementById('formSubhead').textContent = mode === 'login'
+        ? 'Pick up where your recommendations left off.'
+        : 'Takes about 20 seconds — browse a bit and we start learning your interests.';
+      submitBtn.textContent = mode === 'login' ? 'Log in' : 'Sign up';
       document.getElementById('switchPrompt').textContent = mode === 'login' ? 'New here?' : 'Already have an account?';
       document.getElementById('switchLink').textContent = mode === 'login' ? 'Create an account' : 'Log in';
+      pwHint.textContent = mode === 'register' ? 'At least 6 characters' : '';
+      hideError();
+    }
+    document.getElementById('switchLink').addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));
+
+    function hideError() {
+      errorBanner.style.display = 'none';
+      emailHint.style.display = 'none';
+      emailEl.classList.remove('invalid');
+      pwEl.classList.remove('invalid');
     }
 
-    document.getElementById('switchLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      setMode(mode === 'login' ? 'register' : 'login');
-    });
+    function showError(message) {
+      errorBanner.textContent = message;
+      errorBanner.style.display = 'block';
+    }
 
-    document.getElementById('submitBtn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const errorEl = document.getElementById('errorMsg');
-      errorEl.style.display = 'none';
+    // Parses both FastAPI's simple {"detail": "message"} errors AND pydantic's
+    // validation-error array format {"detail": [{"msg": "...", "loc": [...]}]}.
+    function extractErrorMessage(errBody) {
+      const detail = errBody && errBody.detail;
+      if (!detail) return 'Something went wrong. Please try again.';
+      if (typeof detail === 'string') return detail;
+      if (Array.isArray(detail)) {
+        return detail.map(d => d.msg || JSON.stringify(d)).join(' ');
+      }
+      return 'Something went wrong. Please try again.';
+    }
 
+    function setLoading(isLoading) {
+      submitBtn.disabled = isLoading;
+      submitBtn.innerHTML = isLoading
+        ? `<span class="spinner"></span> ${mode === 'login' ? 'Logging in…' : 'Creating account…'}`
+        : (mode === 'login' ? 'Log in' : 'Sign up');
+    }
+
+    async function submit() {
+      hideError();
+      const email = emailEl.value.trim();
+      const password = pwEl.value;
+
+      if (!email || !email.includes('@')) {
+        emailEl.classList.add('invalid');
+        emailHint.textContent = 'Enter a valid email address.';
+        emailHint.style.display = 'block';
+        return;
+      }
+      if (mode === 'register' && password.length < 6) {
+        pwEl.classList.add('invalid');
+        showError('Password must be at least 6 characters.');
+        return;
+      }
+      if (!password) {
+        pwEl.classList.add('invalid');
+        showError('Password is required.');
+        return;
+      }
+
+      setLoading(true);
       try {
         let res;
         if (mode === 'register') {
@@ -50,17 +131,21 @@
           res = await fetch('/auth/token', { method: 'POST', body: form });
         }
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Something went wrong');
-        }
         const data = await res.json();
+        if (!res.ok) throw new Error(extractErrorMessage(data));
+
         Auth.setSession(data.access_token, data.user);
         window.location.href = data.user.role === 'admin' ? '/admin' : '/dashboard';
       } catch (err) {
-        errorEl.textContent = err.message;
-        errorEl.style.display = 'block';
+        showError(err.message || 'Something went wrong. Please try again.');
+        setLoading(false);
       }
-    });
+    }
+
+    submitBtn.addEventListener('click', submit);
+    pwEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+    emailEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') pwEl.focus(); });
+    emailEl.addEventListener('input', hideError);
+    pwEl.addEventListener('input', hideError);
   </script>
 {% endblock %}

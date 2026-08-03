@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Not found — SmartReco{% endblock %}
+{% block content %}
+  <div style="text-align:center; padding: 80px 20px;">
+    <div style="font-family:'Fraunces',serif; font-size:64px; color:var(--clay); margin-bottom:8px;">404</div>
+    <h2 style="margin:0 0 8px;">{{ reason or "We couldn't find that page." }}</h2>
+    <p style="color:var(--muted); margin-bottom:24px;">It may have been moved, or the catalog changed since your last visit.</p>
+    <a href="/" style="background:var(--ink); color:var(--paper); padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600;">Back to catalog</a>
+  </div>
+{% endblock %}
