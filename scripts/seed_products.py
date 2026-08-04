@@ -13,10 +13,11 @@ from app.database import Base, engine, SessionLocal
 from app.models import Product, User
 from app.auth import hash_password
 from app.agent.vectorstore import upsert_product
+from scripts._external_catalog_data import EXTERNAL_CATALOG
 
 Base.metadata.create_all(bind=engine)
 
-CATALOG = [
+HAND_WRITTEN_CATALOG = [
     # Agentic AI / LLM
     ("Agentic AI Systems with LangGraph", "Design multi-step reasoning agents with LangGraph: state machines, tool use, retries, and human-in-the-loop patterns for production agents.", "Agentic AI", 149, "advanced"),
     ("Retrieval-Augmented Generation in Practice", "Build RAG pipelines: chunking strategies, embeddings, vector databases, re-ranking, and grounding LLM answers in real data.", "Agentic AI", 129, "intermediate"),
@@ -41,6 +42,12 @@ CATALOG = [
     ("FastAPI for Production", "Build robust, well-tested APIs with FastAPI: dependency injection, background tasks, auth, and deployment.", "Backend Development", 109, "intermediate"),
     ("System Design for Backend Engineers", "Scalability patterns, caching, queues, and database design trade-offs through real interview-style problems.", "Backend Development", 139, "advanced"),
 ]
+
+# EXTERNAL_CATALOG is curated from real Udemy + Coursera public datasets (Kaggle) via
+# scripts/curate_external_courses.py — adds Web Development, Business Finance,
+# Cybersecurity, Graphic Design, and Musical Instruments, plus reinforces the existing
+# categories with real course data. 149 courses, deduplicated and capped per category.
+CATALOG = HAND_WRITTEN_CATALOG + EXTERNAL_CATALOG
 
 
 def run():
