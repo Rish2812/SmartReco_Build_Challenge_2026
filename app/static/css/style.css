@@ -309,3 +309,49 @@ tr:last-child td { border-bottom: none; }
   .admin-form { grid-template-columns: 1fr; }
   .admin-form textarea, .admin-form button { grid-column: span 1; }
 }
+
+/* --- Explore mega-menu --- */
+.nav-dropdown { position: relative; }
+.nav-dropdown-trigger {
+  background: none; border: none; font: inherit; color: var(--ink); font-weight: 500;
+  font-size: 14px; cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 4px;
+}
+.nav-dropdown-trigger:hover { color: var(--clay); }
+.nav-dropdown-trigger .chev { font-size: 10px; transition: transform .15s ease; }
+.nav-dropdown.open .chev { transform: rotate(180deg); }
+
+.mega-menu {
+  position: absolute; top: calc(100% + 16px); left: 50%; transform: translateX(-50%);
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: var(--shadow-lg); padding: 24px 28px; display: flex; gap: 40px;
+  min-width: 480px; opacity: 0; pointer-events: none; transition: opacity .15s ease, transform .15s ease;
+  z-index: 60;
+}
+.nav-dropdown.open .mega-menu { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.mega-col h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 12px; }
+.mega-col a { display: block; font-size: 14px; color: var(--ink); text-decoration: none; padding: 6px 0; }
+.mega-col a:hover { color: var(--clay); }
+
+/* --- Course hover-preview popover --- */
+.course-popover {
+  position: fixed; width: 320px; background: var(--paper-raised); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 100; padding: 18px;
+  opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .12s ease, transform .12s ease;
+}
+.course-popover.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.course-popover .tag { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--moss); font-weight: 700; }
+.course-popover h4 { margin: 6px 0 8px; font-size: 16px; line-height: 1.3; }
+.course-popover .badges { display: flex; gap: 6px; margin-bottom: 10px; }
+.course-popover .badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--sand); color: var(--clay-dark); }
+.course-popover p.desc { font-size: 13px; color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
+.course-popover .meta-row { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 12px; }
+.course-popover .meta-row .stars { color: var(--gold); letter-spacing: 1px; }
+.course-popover .price-row { display: flex; align-items: center; justify-content: space-between; }
+.course-popover .price-row .price { font-size: 17px; font-weight: 700; }
+.course-popover .view-btn { background: var(--ink); color: white; border: none; padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; }
+.course-popover .view-btn:hover { background: var(--clay-dark); }
+
+@media (max-width: 900px) {
+  .mega-menu { display: none !important; }
+  .course-popover { display: none !important; }
+}

@@ -11,6 +11,29 @@
     <a href="/" class="brand">Smart<span>Reco</span></a>
     <nav class="navlinks">
       <a href="/">Catalog</a>
+      <div class="nav-dropdown" id="exploreDropdown">
+        <button class="nav-dropdown-trigger" id="exploreTrigger" type="button">Explore <span class="chev">▾</span></button>
+        <div class="mega-menu" id="exploreMegaMenu">
+          <div class="mega-col">
+            <h4>Explore by goal</h4>
+            <a href="/?category=Agentic+AI">Learn AI</a>
+            <a href="/?category=Career+Growth">Launch a new career</a>
+            <a href="/?q=certificate">Prepare for a certification</a>
+            <a href="/?category=Web+Development">Master a new skill</a>
+          </div>
+          <div class="mega-col">
+            <h4>In-demand roles</h4>
+            <a href="/?category=Agentic+AI">AI Engineer</a>
+            <a href="/?category=Data+Science">Data Scientist</a>
+            <a href="/?category=Cybersecurity">Cybersecurity Analyst</a>
+            <a href="/?category=Web+Development">Full Stack Developer</a>
+            <a href="/?category=Business+Finance">Financial Analyst</a>
+            <a href="/?category=QA+Automation">QA Automation Engineer</a>
+            <a href="/?category=Backend+Development">Backend Engineer</a>
+            <a href="/?category=Graphic+Design">Graphic Designer</a>
+          </div>
+        </div>
+      </div>
       <a href="/dashboard">My Recommendations</a>
       <a href="/admin" id="adminLink" style="display:none;">Admin</a>
     </nav>
@@ -49,6 +72,7 @@
 
   <script src="/static/js/auth.js"></script>
   <script src="/static/js/tracker.js"></script>
+  <script src="/static/js/course-preview.js"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

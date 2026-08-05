@@ -29,7 +29,10 @@
     {% for p in products %}
       {% set rating = (4.3 + (p.id % 7) * 0.1) | round(1) %}
       {% set reviews = 80 + (p.id * 37 % 900) %}
-      <a href="/product/{{ p.id }}" class="card" onclick="Tracker.trackClick({{ p.id }})">
+      <a href="/product/{{ p.id }}" class="card" onclick="Tracker.trackClick({{ p.id }})"
+         data-preview data-id="{{ p.id }}" data-title="{{ p.title }}" data-category="{{ p.category }}"
+         data-level="{{ p.level }}" data-desc="{{ p.description }}" data-price="{{ '%.0f'|format(p.price) }}"
+         data-rating="{{ rating }}" data-reviews="{{ reviews }}">
         <div class="card-thumb thumb-{{ p.id % 6 }}">
           <span class="level-pill">{{ p.level }}</span>
         </div>

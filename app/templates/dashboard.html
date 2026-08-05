@@ -15,10 +15,13 @@
     }
 
     function cardHtml(p) {
-      const rating = (4.3 + (p.id % 7) * 0.1).toFixed(1);
+      const rating = (4.3 + ((p.id % 7)) * 0.1).toFixed(1);
       const reviews = 80 + ((p.id * 37) % 900);
+      const descEsc = p.description.replace(/"/g, '&quot;');
       return `
-        <a href="/product/${p.id}" class="card">
+        <a href="/product/${p.id}" class="card" data-preview data-id="${p.id}" data-title="${p.title}"
+           data-category="${p.category}" data-level="${p.level}" data-desc="${descEsc}"
+           data-price="${Math.round(p.price)}" data-rating="${rating}" data-reviews="${reviews}">
           <div class="card-thumb thumb-${p.id % 6}"><span class="level-pill">${p.level}</span></div>
           <div class="card-body">
             <span class="tag">${p.category}</span>
