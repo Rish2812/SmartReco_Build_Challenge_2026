@@ -87,10 +87,10 @@ cache-first recommendation gate, emails or logs a digest per user.
 
 ## Catalog data
 
-`scripts/seed_products.py` seeds ~163 courses: 14 hand-written (Agentic AI / QA
-Automation focus) plus 149 curated from two public Kaggle datasets — Udemy course
+`scripts/seed_products.py` seeds ~396 courses: 14 hand-written (Agentic AI / QA
+Automation focus) plus 382 curated from two public Kaggle datasets — Udemy course
 metadata and Coursera course metadata (`scripts/data/`). `scripts/curate_external_courses.py`
-documents exactly how those 149 were selected (top courses by popularity/rating per
+documents exactly how those 382 were selected (top courses by popularity/rating per
 category, deduplicated, capped per category to keep vector-store embedding time
 reasonable) and classified into categories (keyword rules for Coursera, since that
 dataset has no category field). Re-running it regenerates `scripts/_external_catalog_data.py`.
