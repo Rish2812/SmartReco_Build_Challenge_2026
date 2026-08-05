@@ -37,17 +37,48 @@ document.addEventListener('DOMContentLoaded', () => {
     return popoverEl;
   }
 
+  // Our descriptions are template-generated and follow one of a few known shapes
+  // depending on data source. Parsing them lets the popover show structured facts
+  // (duration, lecture count, issuing organization) that the card itself never
+  // displays — rather than just repeating the card's own truncated description.
+  function parseDescriptionFacts(desc) {
+    const facts = [];
+    const udemyMatch = desc.match(/^(\d+) lectures?, ([\d.]+\s*\w+) of content\.\s*([\d,]+)?\s*students? enrolled/i);
+    if (udemyMatch) {
+      facts.push({ label: 'Lectures', value: udemyMatch[1] });
+      facts.push({ label: 'Duration', value: udemyMatch[2] });
+      if (udemyMatch[3]) facts.push({ label: 'Enrolled', value: udemyMatch[3] + '+' });
+      return { facts, source: 'Udemy' };
+    }
+    const courseraMatch = desc.match(/^(.+?) from (.+?)\.\s*Rated ([\d.]+)\/5 by ([\w.]+) learners/i);
+    if (courseraMatch) {
+      facts.push({ label: 'Credential', value: courseraMatch[1] });
+      facts.push({ label: 'Provider', value: courseraMatch[2] });
+      facts.push({ label: 'Learners', value: courseraMatch[4] });
+      return { facts, source: 'Coursera' };
+    }
+    return { facts: [], source: null };
+  }
+
   function renderContent(card) {
     const d = card.dataset;
     const stars = '★★★★★';
     const priceHtml = Number(d.price) === 0
       ? '<span class="price" style="color:var(--moss);">Free</span>'
       : `<span class="price">$${d.price}</span>`;
+    const { facts, source } = parseDescriptionFacts(d.desc);
+
+    const factsHtml = facts.length
+      ? `<div class="popover-facts">${facts.map(f => `<div class="fact"><span class="fact-label">${f.label}</span><span class="fact-value">${f.value}</span></div>`).join('')}</div>`
+      : `<p class="desc">${d.desc}</p>`;
+
+    const sourceTag = source ? `<span class="badge" style="background:var(--sand);">via ${source}</span>` : '';
+
     return `
       <span class="tag">${d.category}</span>
       <h4>${d.title}</h4>
-      <div class="badges"><span class="badge">${d.level}</span></div>
-      <p class="desc">${d.desc.length > 160 ? d.desc.slice(0, 160) + '…' : d.desc}</p>
+      <div class="badges"><span class="badge">${d.level}</span>${sourceTag}</div>
+      ${factsHtml}
       <div class="meta-row"><span class="stars">${stars}</span><strong>${d.rating}</strong><span style="color:var(--muted);">(${d.reviews} reviews)</span></div>
       <div class="price-row">${priceHtml}<a class="view-btn" href="/product/${d.id}">View course</a></div>
     `;

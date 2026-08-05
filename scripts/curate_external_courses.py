@@ -30,10 +30,10 @@ COURSERA_LEVEL_MAP = {
 
 # Udemy subjects worth including, and how many top-by-popularity to keep from each.
 UDEMY_SUBJECT_CAPS = {
-    "Web Development": 22,
-    "Business Finance": 16,
-    "Graphic Design": 10,
-    "Musical Instruments": 6,
+    "Web Development": 70,
+    "Business Finance": 55,
+    "Graphic Design": 35,
+    "Musical Instruments": 20,
 }
 
 # Ordered keyword -> category rules for classifying Coursera titles (first match wins).
@@ -52,7 +52,7 @@ COURSERA_RULES = [
     ("Career Growth", ["leadership", "communication skills", "career", "negotiation", "productivity",
                           "public speaking", "resume", "interview skills", "project management"]),
 ]
-COURSERA_CAP_PER_CATEGORY = 14
+COURSERA_CAP_PER_CATEGORY = 45
 
 
 def parse_students(raw: str) -> float:
@@ -70,6 +70,17 @@ def parse_students(raw: str) -> float:
 
 def clean_title(t: str) -> str:
     return " ".join(t.strip().split())
+
+
+def is_english_title(title: str) -> bool:
+    """Filters out localized/translated catalog entries (Cyrillic, CJK, Arabic, etc.).
+    Both source datasets include non-English versions of some courses under the same
+    subject; this platform's UI/copy is English-only, so mixed-script titles look broken."""
+    letters = re.findall(r"[^\W\d_]", title, re.UNICODE)
+    if not letters:
+        return True
+    latin_count = sum(1 for ch in letters if re.match(r"[A-Za-z\u00C0-\u024F]", ch))
+    return (latin_count / len(letters)) > 0.85
 
 
 def curate_udemy():
@@ -97,7 +108,7 @@ def curate_udemy():
                 break
             title = clean_title(row["course_title"])
             key = title.lower()
-            if key in seen_titles or len(title) > 90:
+            if key in seen_titles or len(title) > 90 or not is_english_title(title):
                 continue
             seen_titles.add(key)
             level = UDEMY_LEVEL_MAP.get(row["level"], "beginner")
@@ -151,7 +162,7 @@ def curate_coursera():
                 break
             title = clean_title(row["course_title"])
             key = title.lower()
-            if key in seen_titles or len(title) > 90:
+            if key in seen_titles or len(title) > 90 or not is_english_title(title):
                 continue
             seen_titles.add(key)
             level = COURSERA_LEVEL_MAP.get(row["course_difficulty"], "beginner")

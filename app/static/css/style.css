@@ -344,6 +344,10 @@ tr:last-child td { border-bottom: none; }
 .course-popover .badges { display: flex; gap: 6px; margin-bottom: 10px; }
 .course-popover .badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--sand); color: var(--clay-dark); }
 .course-popover p.desc { font-size: 13px; color: var(--muted); margin: 0 0 12px; line-height: 1.5; }
+.popover-facts { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; padding: 10px 12px; background: var(--paper); border-radius: 8px; border: 1px solid var(--line); }
+.popover-facts .fact { display: flex; justify-content: space-between; font-size: 12px; }
+.popover-facts .fact-label { color: var(--muted); }
+.popover-facts .fact-value { font-weight: 600; color: var(--ink); text-align: right; max-width: 60%; }
 .course-popover .meta-row { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 12px; }
 .course-popover .meta-row .stars { color: var(--gold); letter-spacing: 1px; }
 .course-popover .price-row { display: flex; align-items: center; justify-content: space-between; }
