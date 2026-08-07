@@ -50,6 +50,49 @@ def upsert_product(product_id: int, title: str, description: str, category: str,
         return False
 
 
+def upsert_products_batch(products: list[tuple]) -> set[int]:
+    """
+    Batched version of upsert_product — embeds all documents in ONE pass through the
+    local model instead of one call per product. For a few hundred products this is
+    the difference between a couple of seconds and minutes (which was blocking Render's
+    port-scan timeout on startup). Each item in `products` is
+    (id, title, description, category, level, price). Returns the set of ids that succeeded.
+    """
+    if not products:
+        return set()
+    try:
+        collection = get_collection()
+        ids = [str(p[0]) for p in products]
+        docs = [_product_document(p[1], p[2], p[3], p[4]) for p in products]
+        metadatas = [{"category": p[3], "level": p[4], "price": p[5], "title": p[1]} for p in products]
+        collection.upsert(ids=ids, documents=docs, metadatas=metadatas)
+        return {p[0] for p in products}
+    except Exception:
+        return set()
+
+
+def upsert_products_batch(products: list[tuple]) -> set:
+    """
+    Same as upsert_product but embeds every product in a single pass instead of one
+    call per product. For a few hundred products this is the difference between a
+    couple of seconds and long enough to blow past Render's port-scan startup timeout —
+    each individual .upsert() call re-pays fixed overhead; one batched call amortizes it.
+    `products` is a list of (id, title, description, category, level, price) tuples.
+    Returns the set of product_ids that were included in the (single) attempt.
+    """
+    if not products:
+        return set()
+    try:
+        collection = get_collection()
+        ids = [str(p[0]) for p in products]
+        docs = [_product_document(p[1], p[2], p[3], p[4]) for p in products]
+        metadatas = [{"category": p[3], "level": p[4], "price": p[5], "title": p[1]} for p in products]
+        collection.upsert(ids=ids, documents=docs, metadatas=metadatas)
+        return {p[0] for p in products}
+    except Exception:
+        return set()
+
+
 def delete_product(product_id: int) -> None:
     try:
         collection = get_collection()

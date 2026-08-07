@@ -12,7 +12,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.database import Base, engine, SessionLocal
 from app.models import Product, User
 from app.auth import hash_password
-from app.agent.vectorstore import upsert_product
 from scripts._external_catalog_data import EXTERNAL_CATALOG
 
 Base.metadata.create_all(bind=engine)
@@ -63,16 +62,16 @@ def run():
         for title, description, category, price, level in CATALOG:
             if db.query(Product).filter(Product.title == title).first():
                 continue
+            # vector_synced left False here on purpose: app startup's resync_vector_store
+            # (app/main.py) batch-embeds every product in one pass, so doing it again
+            # here per-product would be duplicate work and slows the build step for no
+            # benefit — especially with a few hundred products.
             product = Product(title=title, description=description, category=category, price=price, level=level)
             db.add(product)
-            db.commit()
-            db.refresh(product)
-            synced = upsert_product(product.id, title, description, category, level, price)
-            product.vector_synced = synced
-            db.commit()
             created += 1
+        db.commit()
 
-        print(f"Seeded {created} new products.")
+        print(f"Seeded {created} new products (vector sync happens on next app startup).")
         print("Demo admin login: admin@smartreco.local / admin123")
         print("Demo user login:  user@smartreco.local / user1234")
     finally:

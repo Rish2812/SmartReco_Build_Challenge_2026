@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 import logging
 
 from fastapi import FastAPI, Request, Depends
@@ -10,7 +11,7 @@ from app.database import Base, engine, get_db, SessionLocal
 from app.models import Product
 from app.routers import auth, products, events, recommendations, admin
 from app.scheduler.digest import start_scheduler
-from app.agent.vectorstore import upsert_product
+from app.agent.vectorstore import upsert_products_batch
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("smartreco.startup")
@@ -26,20 +27,22 @@ def resync_vector_store() -> None:
     Render's free tier — every fresh container starts with an empty vector store even
     though the product catalog in Postgres is untouched. Without this, retrieval would
     silently return zero hits after every redeploy until an admin manually re-saved
-    each product. Runs on every startup; cheap since embeddings are local (no Mesh call).
+    each product. Runs on every startup, in ONE batched embedding call (see
+    upsert_products_batch) rather than one call per product — with several hundred
+    products, per-product calls were slow enough to blow past Render's port-scan
+    timeout. Also runs in a background thread (see lifespan below) so it never blocks
+    the app from accepting traffic while it works.
     """
     db = SessionLocal()
     try:
         all_products = db.query(Product).all()
-        synced = 0
+        batch = [(p.id, p.title, p.description, p.category, p.level, p.price) for p in all_products]
+        synced_ids = upsert_products_batch(batch)
         for p in all_products:
-            ok = upsert_product(p.id, p.title, p.description, p.category, p.level, p.price)
-            if ok and not p.vector_synced:
+            if p.id in synced_ids and not p.vector_synced:
                 p.vector_synced = True
         db.commit()
-        for p in all_products:
-            synced += 1 if p.vector_synced else 0
-        logger.info("Vector store resync complete: %s/%s products synced.", synced, len(all_products))
+        logger.info("Vector store resync complete: %s/%s products synced.", len(synced_ids), len(all_products))
     except Exception:
         logger.exception("Vector store resync failed on startup.")
     finally:
@@ -48,8 +51,15 @@ def resync_vector_store() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    resync_vector_store()
     scheduler = start_scheduler()
+    # Fire-and-forget in a background thread: resync_vector_store is CPU/IO-bound sync
+    # code (local embedding model + DB writes). Awaiting it here would block uvicorn
+    # from ever signaling "ready", which is exactly what caused Render's port-scan to
+    # time out with a large catalog. The app now accepts traffic immediately; retrieval
+    # may return partial/no results for the first several seconds after a fresh deploy
+    # until this finishes in the background.
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, resync_vector_store)
     yield
     scheduler.shutdown(wait=False)
 
